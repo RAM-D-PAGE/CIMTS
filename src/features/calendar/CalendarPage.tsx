@@ -7,28 +7,37 @@ import {
   X,
   Check,
   Trash2,
+  ListTodo,
 } from 'lucide-react';
 import { useDataStore } from '../../stores/useDataStore';
-import { generateId, getPriorityColor } from '../../utils/helpers';
-import type { CalendarEvent, Task, TaskStatus } from '../../types';
+import { generateId, getPriorityColor, formatDate } from '../../utils/helpers';
+import type { CalendarEvent, Task, TaskStatus, TaskPriority } from '../../types';
 import styles from './CalendarPage.module.css';
 
 const eventColors = ['#6366F1', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6', '#EC4899', '#14B8A6'];
 
 export default function CalendarPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { events, tasks, addEvent, deleteEvent, addTask, updateTask, deleteTask } = useDataStore();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showEventModal, setShowEventModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'event' | 'task'>('event');
   const [newTaskTitle, setNewTaskTitle] = useState('');
 
-  // Event form
+  // Event form states
   const [eventTitle, setEventTitle] = useState('');
   const [eventDesc, setEventDesc] = useState('');
   const [eventStart, setEventStart] = useState('');
   const [eventEnd, setEventEnd] = useState('');
   const [eventColor, setEventColor] = useState('#6366F1');
+
+  // Task form states
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDesc, setTaskDesc] = useState('');
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>('medium');
+  const [taskDueDate, setTaskDueDate] = useState('');
+  const [taskStatus, setTaskStatus] = useState<TaskStatus>('todo');
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -36,7 +45,7 @@ export default function CalendarPage() {
   const monthNames = t('calendar.months', { returnObjects: true }) as string[];
   const weekdayNames = t('calendar.weekdays', { returnObjects: true }) as string[];
 
-  // Build calendar grid
+  // Build calendar grid (42 days)
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -63,10 +72,17 @@ export default function CalendarPage() {
     return days;
   }, [year, month]);
 
-  const isToday = (date: Date) => date.toDateString() === new Date().toDateString();
+  const isTodayDate = (date: Date) => date.toDateString() === new Date().toDateString();
 
   const getEventsForDate = (date: Date) => {
     return events.filter((e) => new Date(e.startTime).toDateString() === date.toDateString());
+  };
+
+  const getTasksForDate = (date: Date) => {
+    return tasks.filter((t) => {
+      if (!t.dueDate) return false;
+      return new Date(t.dueDate).toDateString() === date.toDateString();
+    });
   };
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
@@ -75,12 +91,56 @@ export default function CalendarPage() {
 
   const openNewEvent = useCallback((date?: Date) => {
     const d = date || new Date();
-    const isoDate = d.toISOString().slice(0, 16);
+    // format local date-time string for datetime-local input (YYYY-MM-DDThh:mm)
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const localDateTimeStr = `${y}-${m}-${day}T${hours}:${minutes}`;
+
     setEventTitle('');
     setEventDesc('');
-    setEventStart(isoDate);
+    setEventStart(localDateTimeStr);
     setEventEnd('');
     setEventColor('#6366F1');
+
+    // Default task fields if toggled
+    const localDateStr = `${y}-${m}-${day}`;
+    setTaskTitle('');
+    setTaskDesc('');
+    setTaskPriority('medium');
+    setTaskDueDate(localDateStr);
+    setTaskStatus('todo');
+
+    setModalMode('event');
+    setShowEventModal(true);
+  }, []);
+
+  const openNewTask = useCallback((date?: Date) => {
+    const d = date || new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const localDateStr = `${y}-${m}-${day}`;
+
+    setTaskTitle('');
+    setTaskDesc('');
+    setTaskPriority('medium');
+    setTaskDueDate(localDateStr);
+    setTaskStatus('todo');
+
+    // Default event fields if toggled
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const localDateTimeStr = `${y}-${m}-${day}T${hours}:${minutes}`;
+    setEventTitle('');
+    setEventDesc('');
+    setEventStart(localDateTimeStr);
+    setEventEnd('');
+    setEventColor('#6366F1');
+
+    setModalMode('task');
     setShowEventModal(true);
   }, []);
 
@@ -99,13 +159,30 @@ export default function CalendarPage() {
     setShowEventModal(false);
   }, [eventTitle, eventDesc, eventStart, eventEnd, eventColor, addEvent]);
 
+  const saveTask = useCallback(() => {
+    if (!taskTitle.trim()) return;
+    addTask({
+      id: generateId(),
+      title: taskTitle,
+      description: taskDesc || undefined,
+      priority: taskPriority,
+      dueDate: taskDueDate || undefined,
+      status: taskStatus,
+      createdAt: new Date().toISOString(),
+    });
+    setShowEventModal(false);
+  }, [taskTitle, taskDesc, taskPriority, taskDueDate, taskStatus, addTask]);
+
   const handleAddTask = useCallback(() => {
     if (!newTaskTitle.trim()) return;
+    const today = new Date();
+    const localDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     addTask({
       id: generateId(),
       title: newTaskTitle,
       status: 'todo',
       priority: 'medium',
+      dueDate: localDateStr,
       createdAt: new Date().toISOString(),
     });
     setNewTaskTitle('');
@@ -127,10 +204,16 @@ export default function CalendarPage() {
             <button className={styles.navBtn} onClick={nextMonth}><ChevronRight size={18} /></button>
             <button className={styles.todayBtn} onClick={goToday}>{t('calendar.today')}</button>
           </div>
-          <button className={styles.newEventBtn} onClick={() => openNewEvent()}>
-            <Plus size={16} />
-            {t('calendar.newEvent')}
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className={styles.todayBtn} style={{ display: 'flex', alignItems: 'center', gap: '4px' }} onClick={() => openNewTask()}>
+              <ListTodo size={14} />
+              {t('calendar.addTask')}
+            </button>
+            <button className={styles.newEventBtn} onClick={() => openNewEvent()}>
+              <Plus size={16} />
+              {t('calendar.newEvent')}
+            </button>
+          </div>
         </div>
 
         <div className={styles.calendarGrid}>
@@ -142,22 +225,43 @@ export default function CalendarPage() {
           <div className={styles.daysGrid}>
             {calendarDays.map((day, i) => {
               const dayEvents = getEventsForDate(day.date);
+              const dayTasks = getTasksForDate(day.date);
               return (
                 <div
                   key={i}
-                  className={`${styles.dayCell} ${!day.isCurrentMonth ? styles.otherMonth : ''} ${isToday(day.date) ? styles.today : ''}`}
+                  className={`${styles.dayCell} ${!day.isCurrentMonth ? styles.otherMonth : ''} ${isTodayDate(day.date) ? styles.today : ''}`}
                   onClick={() => openNewEvent(day.date)}
                 >
                   <div className={styles.dayNumber}>{day.date.getDate()}</div>
                   <div className={styles.dayEvents}>
-                    {dayEvents.slice(0, 3).map((ev) => (
+                    {dayEvents.map((ev) => (
                       <div
                         key={ev.id}
                         className={styles.dayEvent}
                         style={{ background: ev.color }}
-                        onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(t('calendar.deleteEvent') || 'Delete event?')) {
+                            deleteEvent(ev.id);
+                          }
+                        }}
+                        title={ev.title}
                       >
                         {ev.title}
+                      </div>
+                    ))}
+                    {dayTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className={`${styles.dayTask} ${task.status === 'done' ? styles.done : ''} ${task.status === 'in_progress' ? styles.inProgress : ''}`}
+                        style={{ borderLeftColor: getPriorityColor(task.priority) }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cycleStatus(task);
+                        }}
+                        title={`${task.title} (${t(`calendar.taskStatus.${task.status === 'in_progress' ? 'inProgress' : task.status}`)})`}
+                      >
+                        <span className={styles.dayTaskText}>{task.title}</span>
                       </div>
                     ))}
                   </div>
@@ -196,6 +300,11 @@ export default function CalendarPage() {
                     <span className={styles.taskPriority} style={{ background: getPriorityColor(task.priority) }}>
                       {t(`calendar.priority.${task.priority}`)}
                     </span>
+                    {task.dueDate && (
+                      <span className={styles.taskDue}>
+                        {formatDate(task.dueDate, i18n.language)}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button className={styles.taskDeleteBtn} onClick={() => deleteTask(task.id)}>
@@ -220,73 +329,157 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Event Modal */}
+      {/* Event / Task Modal */}
       {showEventModal && (
         <div className={styles.eventOverlay} onClick={() => setShowEventModal(false)}>
           <div className={styles.eventModal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.eventModalHeader}>
-              <span className={styles.eventModalTitle}>{t('calendar.newEvent')}</span>
+              <span className={styles.eventModalTitle}>
+                {modalMode === 'event' ? t('calendar.newEvent') : t('calendar.addTask')}
+              </span>
               <button className={styles.eventModalClose} onClick={() => setShowEventModal(false)}>
                 <X size={18} />
               </button>
             </div>
-            <div className={styles.eventModalBody}>
-              <div className={styles.eventField}>
-                <label>{t('calendar.eventTitle')}</label>
-                <input
-                  className={styles.eventInput}
-                  value={eventTitle}
-                  onChange={(e) => setEventTitle(e.target.value)}
-                  autoFocus
-                />
+
+            {/* Modal Tabs */}
+            <div className={styles.modalTabs}>
+              <div
+                className={`${styles.modalTab} ${modalMode === 'event' ? styles.active : ''}`}
+                onClick={() => setModalMode('event')}
+              >
+                {t('calendar.newEvent')}
               </div>
-              <div className={styles.eventField}>
-                <label>{t('calendar.description')}</label>
-                <input
-                  className={styles.eventInput}
-                  value={eventDesc}
-                  onChange={(e) => setEventDesc(e.target.value)}
-                />
-              </div>
-              <div className={styles.eventRow}>
-                <div className={styles.eventField}>
-                  <label>{t('calendar.startTime')}</label>
-                  <input
-                    className={styles.eventInput}
-                    type="datetime-local"
-                    value={eventStart}
-                    onChange={(e) => setEventStart(e.target.value)}
-                  />
-                </div>
-                <div className={styles.eventField}>
-                  <label>{t('calendar.endTime')}</label>
-                  <input
-                    className={styles.eventInput}
-                    type="datetime-local"
-                    value={eventEnd}
-                    onChange={(e) => setEventEnd(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className={styles.eventField}>
-                <label>Color</label>
-                <div className={styles.colorPicker}>
-                  {eventColors.map((c) => (
-                    <div
-                      key={c}
-                      className={`${styles.colorSwatch} ${eventColor === c ? styles.active : ''}`}
-                      style={{ background: c }}
-                      onClick={() => setEventColor(c)}
-                    />
-                  ))}
-                </div>
+              <div
+                className={`${styles.modalTab} ${modalMode === 'task' ? styles.active : ''}`}
+                onClick={() => setModalMode('task')}
+              >
+                {t('calendar.tasks')}
               </div>
             </div>
+
+            {modalMode === 'event' ? (
+              <div className={styles.eventModalBody}>
+                <div className={styles.eventField}>
+                  <label>{t('calendar.eventTitle')}</label>
+                  <input
+                    className={styles.eventInput}
+                    value={eventTitle}
+                    onChange={(e) => setEventTitle(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div className={styles.eventField}>
+                  <label>{t('calendar.description')}</label>
+                  <input
+                    className={styles.eventInput}
+                    value={eventDesc}
+                    onChange={(e) => setEventDesc(e.target.value)}
+                  />
+                </div>
+                <div className={styles.eventRow}>
+                  <div className={styles.eventField}>
+                    <label>{t('calendar.startTime')}</label>
+                    <input
+                      className={styles.eventInput}
+                      type="datetime-local"
+                      value={eventStart}
+                      onChange={(e) => setEventStart(e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.eventField}>
+                    <label>{t('calendar.endTime')}</label>
+                    <input
+                      className={styles.eventInput}
+                      type="datetime-local"
+                      value={eventEnd}
+                      onChange={(e) => setEventEnd(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className={styles.eventField}>
+                  <label>Color</label>
+                  <div className={styles.colorPicker}>
+                    {eventColors.map((c) => (
+                      <div
+                        key={c}
+                        className={`${styles.colorSwatch} ${eventColor === c ? styles.active : ''}`}
+                        style={{ background: c }}
+                        onClick={() => setEventColor(c)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.eventModalBody}>
+                <div className={styles.eventField}>
+                  <label>{t('calendar.eventTitle')}</label>
+                  <input
+                    className={styles.eventInput}
+                    value={taskTitle}
+                    onChange={(e) => setTaskTitle(e.target.value)}
+                    placeholder={t('calendar.addTask')}
+                    autoFocus
+                  />
+                </div>
+                <div className={styles.eventField}>
+                  <label>{t('calendar.description')}</label>
+                  <input
+                    className={styles.eventInput}
+                    value={taskDesc}
+                    onChange={(e) => setTaskDesc(e.target.value)}
+                    placeholder={t('calendar.description')}
+                  />
+                </div>
+                <div className={styles.eventRow}>
+                  <div className={styles.eventField}>
+                    <label>Due Date</label>
+                    <input
+                      className={styles.eventInput}
+                      type="date"
+                      value={taskDueDate}
+                      onChange={(e) => setTaskDueDate(e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.eventField}>
+                    <label>Priority</label>
+                    <select
+                      className={styles.eventInput}
+                      style={{ appearance: 'auto' }}
+                      value={taskPriority}
+                      onChange={(e) => setTaskPriority(e.target.value as TaskPriority)}
+                    >
+                      <option value="low">{t('calendar.priority.low')}</option>
+                      <option value="medium">{t('calendar.priority.medium')}</option>
+                      <option value="high">{t('calendar.priority.high')}</option>
+                    </select>
+                  </div>
+                </div>
+                <div className={styles.eventField}>
+                  <label>Status</label>
+                  <select
+                    className={styles.eventInput}
+                    style={{ appearance: 'auto' }}
+                    value={taskStatus}
+                    onChange={(e) => setTaskStatus(e.target.value as TaskStatus)}
+                  >
+                    <option value="todo">{t('calendar.taskStatus.todo')}</option>
+                    <option value="in_progress">{t('calendar.taskStatus.inProgress')}</option>
+                    <option value="done">{t('calendar.taskStatus.done')}</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
             <div className={styles.eventModalFooter}>
               <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setShowEventModal(false)}>
                 {t('common.cancel')}
               </button>
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={saveEvent}>
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={modalMode === 'event' ? saveEvent : saveTask}
+              >
                 {t('common.save')}
               </button>
             </div>
