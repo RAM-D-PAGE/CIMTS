@@ -390,6 +390,8 @@ ul, ol {
    ============================ */
 .tiptap-editor {
   min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
   padding: 1rem;
   outline: none;
 }

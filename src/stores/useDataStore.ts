@@ -45,10 +45,12 @@ interface DataStore {
 }
 
 const defaultProfile: Profile = {
-  name: '',
-  company: '',
-  department: '',
-  position: '',
+  name: 'Intern',
+  company: 'Company Name',
+  department: 'IT Department',
+  position: 'Intern',
+  internshipStart: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 days ago
+  internshipEnd: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 75 days from now
 };
 
 function loadFromStorage(): Partial<DataStore> {

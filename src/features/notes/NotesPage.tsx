@@ -17,6 +17,7 @@ import {
   Trash2,
   Edit3,
   FileText,
+  Download,
 } from 'lucide-react';
 import { useDataStore } from '../../stores/useDataStore';
 import { generateId, formatDate, getCategoryColor } from '../../utils/helpers';
@@ -47,6 +48,11 @@ export default function NotesPage() {
       Placeholder.configure({ placeholder: t('notes.contentPlaceholder') }),
     ],
     content: '',
+    editorProps: {
+      attributes: {
+        class: 'tiptap-editor',
+      },
+    },
   });
 
   const filteredNotes = useMemo(() => {
@@ -104,6 +110,153 @@ export default function NotesPage() {
     }
     setIsEditorOpen(false);
   }, [noteTitle, noteCategory, noteTags, editor, editingNote, addNote, updateNote]);
+
+  const exportAsMarkdown = useCallback((note: Note) => {
+    let markdown = `# ${note.title}\n\n`;
+    markdown += `*Category: ${note.category}*\n`;
+    markdown += `*Created At: ${new Date(note.createdAt).toLocaleString()}*\n\n`;
+
+    let body = note.content;
+    body = body.replace(/<h1>(.*?)<\/h1>/gi, '# $1\n');
+    body = body.replace(/<h2>(.*?)<\/h2>/gi, '## $1\n');
+    body = body.replace(/<h3>(.*?)<\/h3>/gi, '### $1\n');
+    body = body.replace(/<p>(.*?)<\/p>/gi, '$1\n\n');
+    body = body.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
+    body = body.replace(/<em>(.*?)<\/em>/gi, '*$1*');
+    body = body.replace(/<li>(.*?)<\/li>/gi, '- $1\n');
+    body = body.replace(/<ul>/gi, '');
+    body = body.replace(/<\/ul>/gi, '\n');
+    body = body.replace(/<ol>/gi, '');
+    body = body.replace(/<\/ol>/gi, '\n');
+    body = body.replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n');
+    body = body.replace(/<br\s*\/?>/gi, '\n');
+    body = body.replace(/<[^>]+>/g, '');
+
+    markdown += body;
+
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${note.title.toLowerCase().replace(/[^a-z0-9]/g, '_')}.md`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, []);
+
+  const exportAsPDF = useCallback((note: Note) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${note.title}</title>
+          <style>
+            body {
+              font-family: 'Inter', -apple-system, sans-serif;
+              padding: 40px;
+              color: #111827;
+              line-height: 1.6;
+            }
+            .header {
+              border-bottom: 2px solid #E5E7EB;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .title {
+              font-size: 24px;
+              font-weight: 700;
+              margin: 0 0 10px 0;
+            }
+            .meta {
+              font-size: 14px;
+              color: #6B7280;
+            }
+            .meta-item {
+              margin-right: 15px;
+            }
+            .content {
+              font-size: 16px;
+            }
+            h1 { font-size: 20px; margin-top: 20px; }
+            h2 { font-size: 18px; margin-top: 20px; }
+            blockquote {
+              border-left: 3px solid #6366F1;
+              padding-left: 15px;
+              color: #4B5563;
+              font-style: italic;
+              margin: 15px 0;
+            }
+            code {
+              background: #F3F4F6;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-size: 14px;
+            }
+            pre {
+              background: #111827;
+              color: #F9FAFB;
+              padding: 15px;
+              border-radius: 6px;
+              overflow-x: auto;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 class="title">${note.title}</h1>
+            <div class="meta">
+              <span class="meta-item"><strong>Category:</strong> ${note.category.toUpperCase()}</span>
+              <span class="meta-item"><strong>Date:</strong> ${new Date(note.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+          <div class="content">
+            ${note.content}
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }, []);
+
+  const handleExportMarkdownCurrent = useCallback(() => {
+    const content = editor?.getHTML() || '';
+    const tags = noteTags.split(',').map((t) => t.trim()).filter(Boolean);
+    const tempNote: Note = {
+      id: editingNote?.id || 'temp',
+      title: noteTitle || 'Untitled Note',
+      content,
+      category: noteCategory,
+      tags,
+      date: new Date().toISOString().split('T')[0],
+      createdAt: editingNote?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    exportAsMarkdown(tempNote);
+  }, [editor, noteTitle, noteCategory, noteTags, editingNote, exportAsMarkdown]);
+
+  const handleExportPDFCurrent = useCallback(() => {
+    const content = editor?.getHTML() || '';
+    const tags = noteTags.split(',').map((t) => t.trim()).filter(Boolean);
+    const tempNote: Note = {
+      id: editingNote?.id || 'temp',
+      title: noteTitle || 'Untitled Note',
+      content,
+      category: noteCategory,
+      tags,
+      date: new Date().toISOString().split('T')[0],
+      createdAt: editingNote?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    exportAsPDF(tempNote);
+  }, [editor, noteTitle, noteCategory, noteTags, editingNote, exportAsPDF]);
 
   const handleDeleteNote = useCallback((e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -186,6 +339,13 @@ export default function NotesPage() {
                     <Edit3 size={14} />
                   </button>
                   <button
+                    className={styles.noteActionBtn}
+                    onClick={(e) => { e.stopPropagation(); exportAsMarkdown(note); }}
+                    title="Export as Markdown"
+                  >
+                    <Download size={14} />
+                  </button>
+                  <button
                     className={`${styles.noteActionBtn} ${styles.danger}`}
                     onClick={(e) => handleDeleteNote(e, note.id)}
                     title={t('common.delete')}
@@ -214,9 +374,34 @@ export default function NotesPage() {
               <div className={styles.editorTitle}>
                 {editingNote ? t('notes.editNote') : t('notes.newNote')}
               </div>
-              <button className={styles.editorCloseBtn} onClick={() => setIsEditorOpen(false)}>
-                <X size={18} />
-              </button>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  className={styles.editorCloseBtn}
+                  onClick={handleExportMarkdownCurrent}
+                  title="Export as Markdown"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Download size={16} />
+                </button>
+                <button
+                  onClick={handleExportPDFCurrent}
+                  title="Print / Export as PDF"
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '4px 8px',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: 'var(--border-radius-sm)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  PDF
+                </button>
+                <button className={styles.editorCloseBtn} onClick={() => setIsEditorOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             <div className={styles.editorBody}>
