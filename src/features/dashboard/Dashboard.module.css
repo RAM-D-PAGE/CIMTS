@@ -50,7 +50,7 @@
 /* Stats Grid */
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
 }
 
@@ -78,9 +78,10 @@
   opacity: 0.08;
 }
 .statCard:nth-child(1)::after { background: var(--primary-500); }
-.statCard:nth-child(2)::after { background: var(--success-500); }
-.statCard:nth-child(3)::after { background: var(--warning-500); }
-.statCard:nth-child(4)::after { background: var(--accent-500); }
+.statCard:nth-child(2)::after { background: var(--accent-500); }
+.statCard:nth-child(3)::after { background: var(--success-500); }
+.statCard:nth-child(4)::after { background: var(--warning-500); }
+.statCard:nth-child(5)::after { background: var(--primary-500); }
 
 .statIcon {
   width: 42px;

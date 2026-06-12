@@ -43,6 +43,11 @@ export default function Dashboard() {
     return sum + (end - new Date(e.clockIn).getTime());
   }, 0);
 
+  const totalMs = timeEntries.reduce((sum, e) => {
+    const end = e.clockOut ? new Date(e.clockOut).getTime() : Date.now();
+    return sum + (end - new Date(e.clockIn).getTime());
+  }, 0);
+
   const completedTasks = tasks.filter((t) => t.status === 'done').length;
 
   // Weekly hours chart data
@@ -92,21 +97,28 @@ export default function Dashboard() {
           <div className={styles.statLabel}>{t('dashboard.internDays')}</div>
         </div>
         <div className={`${styles.statCard} animate-fade-in-up stagger-2`}>
+          <div className={`${styles.statIcon} ${styles.violet}`}>
+            <TimerIcon size={20} />
+          </div>
+          <div className={styles.statValue}>{formatDurationString(totalMs)}</div>
+          <div className={styles.statLabel}>{i18n.language === 'th' ? 'ชั่วโมงทำงานรวม' : 'Total Hours'}</div>
+        </div>
+        <div className={`${styles.statCard} animate-fade-in-up stagger-3`}>
           <div className={`${styles.statIcon} ${styles.green}`}>
             <Clock size={20} />
           </div>
           <div className={styles.statValue}>{formatDurationString(todayMs)}</div>
           <div className={styles.statLabel}>{t('dashboard.hoursToday')}</div>
         </div>
-        <div className={`${styles.statCard} animate-fade-in-up stagger-3`}>
+        <div className={`${styles.statCard} animate-fade-in-up stagger-4`}>
           <div className={`${styles.statIcon} ${styles.amber}`}>
             <CheckCircle2 size={20} />
           </div>
           <div className={styles.statValue}>{completedTasks}/{tasks.length}</div>
           <div className={styles.statLabel}>{t('dashboard.tasksCompleted')}</div>
         </div>
-        <div className={`${styles.statCard} animate-fade-in-up stagger-4`}>
-          <div className={`${styles.statIcon} ${styles.violet}`}>
+        <div className={`${styles.statCard} animate-fade-in-up stagger-5`}>
+          <div className={`${styles.statIcon} ${styles.indigo}`}>
             <FileText size={20} />
           </div>
           <div className={styles.statValue}>{notes.length}</div>

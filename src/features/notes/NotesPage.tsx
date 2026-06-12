@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -145,86 +147,33 @@ export default function NotesPage() {
   }, []);
 
   const exportAsPDF = useCallback((note: Note) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    const element = document.createElement('div');
+    element.innerHTML = `
+      <div style="font-family: 'sans-serif'; padding: 40px; color: #1f2937;">
+        <h1 style="border-bottom: 2px solid #6366F1; padding-bottom: 10px; margin-bottom: 20px;">
+          ${note.title}
+        </h1>
+        <div style="font-size: 14px; color: #6b7280; margin-bottom: 30px;">
+          <strong>Date:</strong> ${formatDate(note.createdAt, i18n.language)} <br/>
+          <strong>Category:</strong> ${t(`notes.categories.${note.category}`)}
+        </div>
+        <div style="line-height: 1.6; font-size: 16px;">
+          ${note.content}
+        </div>
+      </div>
+    `;
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${note.title}</title>
-          <style>
-            body {
-              font-family: 'Inter', -apple-system, sans-serif;
-              padding: 40px;
-              color: #111827;
-              line-height: 1.6;
-            }
-            .header {
-              border-bottom: 2px solid #E5E7EB;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
-            }
-            .title {
-              font-size: 24px;
-              font-weight: 700;
-              margin: 0 0 10px 0;
-            }
-            .meta {
-              font-size: 14px;
-              color: #6B7280;
-            }
-            .meta-item {
-              margin-right: 15px;
-            }
-            .content {
-              font-size: 16px;
-            }
-            h1 { font-size: 20px; margin-top: 20px; }
-            h2 { font-size: 18px; margin-top: 20px; }
-            blockquote {
-              border-left: 3px solid #6366F1;
-              padding-left: 15px;
-              color: #4B5563;
-              font-style: italic;
-              margin: 15px 0;
-            }
-            code {
-              background: #F3F4F6;
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-size: 14px;
-            }
-            pre {
-              background: #111827;
-              color: #F9FAFB;
-              padding: 15px;
-              border-radius: 6px;
-              overflow-x: auto;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1 class="title">${note.title}</h1>
-            <div class="meta">
-              <span class="meta-item"><strong>Category:</strong> ${note.category.toUpperCase()}</span>
-              <span class="meta-item"><strong>Date:</strong> ${new Date(note.createdAt).toLocaleDateString()}</span>
-            </div>
-          </div>
-          <div class="content">
-            ${note.content}
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  }, []);
+    const opt = {
+      margin:       15,
+      filename:     `InternLog_${note.title}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // @ts-ignore
+    html2pdf().set(opt).from(element).save();
+  }, [i18n.language, t]);
 
   const handleExportMarkdownCurrent = useCallback(() => {
     const content = editor?.getHTML() || '';
@@ -340,10 +289,17 @@ export default function NotesPage() {
                   </button>
                   <button
                     className={styles.noteActionBtn}
+                    onClick={(e) => { e.stopPropagation(); exportAsPDF(note); }}
+                    title="Export as PDF"
+                  >
+                    <Download size={14} />
+                  </button>
+                  <button
+                    className={styles.noteActionBtn}
                     onClick={(e) => { e.stopPropagation(); exportAsMarkdown(note); }}
                     title="Export as Markdown"
                   >
-                    <Download size={14} />
+                    <FileText size={14} />
                   </button>
                   <button
                     className={`${styles.noteActionBtn} ${styles.danger}`}

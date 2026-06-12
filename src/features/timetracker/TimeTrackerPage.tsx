@@ -60,6 +60,7 @@ export default function TimeTrackerPage() {
       today: calcMs(timeEntries.filter((e) => new Date(e.clockIn).toDateString() === today)),
       week: calcMs(timeEntries.filter((e) => new Date(e.clockIn) >= weekStart)),
       month: calcMs(timeEntries.filter((e) => new Date(e.clockIn) >= monthStart)),
+      total: calcMs(timeEntries),
     };
   }, [timeEntries, now]);
 
@@ -101,6 +102,10 @@ export default function TimeTrackerPage() {
         <div className={`${styles.statCard} animate-fade-in-up stagger-3`}>
           <div className={styles.statValue}>{formatDurationString(stats.month)}</div>
           <div className={styles.statLabel}>{t('timeTracker.monthHours')}</div>
+        </div>
+        <div className={`${styles.statCard} animate-fade-in-up stagger-4`} style={{ background: 'var(--primary-500)', color: 'white' }}>
+          <div className={styles.statValue}>{formatDurationString(stats.total)}</div>
+          <div className={styles.statLabel}>{i18n.language === 'th' ? 'ชั่วโมงทำงานรวม' : 'Total Hours'}</div>
         </div>
       </div>
 
