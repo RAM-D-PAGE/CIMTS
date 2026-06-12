@@ -1,0 +1,181 @@
+.timeTracker { display: flex; flex-direction: column; gap: 24px; }
+
+/* Clock Section */
+.clockSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-xl);
+  text-align: center;
+}
+
+.clockStatus {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.statusDot.active {
+  background: var(--success-500);
+  animation: pulse 2s ease-in-out infinite;
+}
+.statusDot.inactive {
+  background: var(--gray-400);
+}
+
+.clockTimer {
+  font-size: 3.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.clockBtn {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition-base);
+  position: relative;
+}
+.clockBtn::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  transition: border-color var(--transition-base);
+}
+.clockBtn:hover::before {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.clockIn {
+  background: linear-gradient(135deg, var(--success-500), #059669);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+}
+.clockIn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.45);
+}
+
+.clockOut {
+  background: linear-gradient(135deg, var(--danger-500), #DC2626);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+}
+.clockOut:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(239, 68, 68, 0.45);
+}
+
+/* Stats Row */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.statCard {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  text-align: center;
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.statLabel {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* History Table */
+.historySection {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+.historyHeader {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.historyTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.historyTable th {
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-light);
+}
+.historyTable td {
+  padding: 12px 20px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+}
+.historyTable tr:last-child td { border-bottom: none; }
+.historyTable tr:hover td { background: var(--surface-hover); }
+
+.durationBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  background: var(--primary-50);
+  color: var(--primary-600);
+  border-radius: var(--border-radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+[data-theme="dark"] .durationBadge {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-400);
+}
+
+.emptyHistory {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .clockTimer { font-size: 2.5rem; }
+  .clockBtn { width: 120px; height: 120px; font-size: 0.9rem; }
+  .statsRow { grid-template-columns: 1fr; }
+  .historyTable th, .historyTable td { padding: 10px 12px; font-size: 0.78rem; }
+}

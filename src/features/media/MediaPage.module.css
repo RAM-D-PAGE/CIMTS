@@ -1,0 +1,275 @@
+.mediaPage { display: flex; flex-direction: column; gap: 20px; }
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filterTabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-tertiary);
+  padding: 4px;
+  border-radius: var(--border-radius-full);
+}
+.filterTab {
+  padding: 6px 16px;
+  border-radius: var(--border-radius-full);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+.filterTab:hover { color: var(--text-primary); }
+.filterTab.active {
+  background: var(--surface);
+  color: var(--primary-600);
+  box-shadow: var(--shadow-xs);
+}
+
+.actionBtns { display: flex; gap: 8px; }
+
+.uploadBtn, .cameraBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--border-radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+.uploadBtn {
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.uploadBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4); }
+.cameraBtn {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+.cameraBtn:hover { border-color: var(--primary-300); color: var(--primary-600); }
+
+/* Drop Zone */
+.dropZone {
+  border: 2px dashed var(--border-default);
+  border-radius: var(--border-radius-xl);
+  padding: 40px;
+  text-align: center;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  background: var(--surface);
+}
+.dropZone.dragOver {
+  border-color: var(--primary-400);
+  background: var(--primary-50);
+}
+[data-theme="dark"] .dropZone.dragOver {
+  background: rgba(99, 102, 241, 0.08);
+}
+.dropZoneIcon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+}
+.dropZoneText {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.dropZoneLink {
+  color: var(--primary-500);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Gallery */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.mediaCard {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  position: relative;
+  group: true;
+}
+.mediaCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.mediaThumbnail {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mediaThumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fileIcon {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+}
+
+.mediaInfo {
+  padding: 10px 14px;
+}
+.mediaName {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mediaSize {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.mediaOverlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.mediaCard:hover .mediaOverlay { opacity: 1; }
+
+.mediaOverlayBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--border-radius-sm);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+.mediaOverlayBtn:hover { background: rgba(0, 0, 0, 0.8); }
+.mediaOverlayBtn.danger:hover { background: var(--danger-500); }
+
+/* Camera Modal */
+.cameraModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+.cameraVideo {
+  max-width: 640px;
+  width: 100%;
+  border-radius: var(--border-radius-xl);
+  background: black;
+}
+.cameraBtns { display: flex; gap: 12px; }
+.captureBtn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: white;
+  border: 4px solid rgba(255,255,255,0.5);
+  transition: transform var(--transition-fast);
+}
+.captureBtn:hover { transform: scale(1.1); }
+.closeCameraBtn {
+  padding: 10px 24px;
+  border-radius: var(--border-radius-full);
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-weight: 600;
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.lightbox img {
+  max-width: 90%;
+  max-height: 90vh;
+  border-radius: var(--border-radius-lg);
+  object-fit: contain;
+}
+.lightboxClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+.lightboxClose:hover { background: rgba(255,255,255,0.3); }
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-tertiary);
+}
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .topBar { flex-direction: column; align-items: stretch; }
+  .gallery { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .mediaThumbnail, .fileIcon { height: 120px; }
+}
